@@ -1,78 +1,135 @@
-#include "../include/Decompressor.h"
 
+#include "../include/Decompressor.h"
 #include "../include/FileHeader.h"
 #include "../include/HuffmanTree.h"
 #include "../include/BitReader.h"
 #include "../include/Decoder.h"
 
 #include <array>
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
+
+namespace fs = std::filesystem;
 
 void Decompressor::decompress(
     const std::string& inputFileName,
     const std::string& outputFileName
 ) {
-    if (inputFileName == outputFileName) {
+    fs::path inputPath =
+        fs::absolute(inputFileName).lexically_normal();
+
+    fs::path outputPath =
+        fs::absolute(outputFileName).lexically_normal();
+
+    if (inputPath == outputPath) {
         throw std::runtime_error(
             "Input and output files must be different."
         );
     }
 
-    // Step 1: Open compressed file
-    std::ifstream inputFile(
+    std::ifstream input(
         inputFileName,
         std::ios::binary
     );
 
-    if (!inputFile) {
+    if (!input) {
         throw std::runtime_error(
             "Could not open compressed file."
         );
     }
 
-    // Step 2: Read metadata
     uint64_t originalSize = 0;
     std::array<uint64_t, 256> frequencies{};
 
-    FileHeader::read(
-        inputFile,
+    uint8_t mode = FileHeader::readMode(
+        input,
         originalSize,
         frequencies
     );
 
-    // Step 3: Rebuild the same Huffman tree
-    HuffmanTree tree;
-    tree.build(frequencies);
+    // Reject obviously truncated raw streams before creating output.
+    if (mode == 0) {
+        auto currentPosition = input.tellg();
+        input.seekg(0, std::ios::end);
+        auto endPosition = input.tellg();
 
-    // Step 4: Create restored output file
-    std::ofstream outputFile(
+        if (currentPosition < 0 || endPosition < currentPosition ||
+            static_cast<uint64_t>(endPosition - currentPosition)
+                < originalSize) {
+            throw std::runtime_error(
+                "Raw data is incomplete."
+            );
+        }
+
+        input.seekg(currentPosition);
+    }
+
+    std::ofstream output(
         outputFileName,
         std::ios::binary
     );
 
-    if (!outputFile) {
+    if (!output) {
         throw std::runtime_error(
             "Could not create restored file."
         );
     }
 
-    // Step 5: Read bits after the header
-    BitReader reader(inputFile);
+    
+    if (mode == 0) {
+        char buffer[65536];
+        uint64_t remaining = originalSize;
 
-    // Step 6: Decode original bytes
-    Decoder::decodeFile(
-        reader,
-        tree.getRoot(),
-        originalSize,
-        outputFile
-    );
+        while (remaining > 0) {
+            std::streamsize wanted =
+                static_cast<std::streamsize>(
+                    remaining < sizeof(buffer)
+                        ? remaining
+                        : sizeof(buffer)
+                );
 
-    outputFile.close();
+            input.read(buffer, wanted);
 
-    if (!outputFile) {
+            std::streamsize count = input.gcount();
+
+            if (count != wanted) {
+                throw std::runtime_error(
+                    "Raw data ended unexpectedly."
+                );
+            }
+
+            output.write(buffer, count);
+
+            if (!output) {
+                throw std::runtime_error(
+                    "Failed to restore raw data."
+                );
+            }
+
+            remaining -= static_cast<uint64_t>(count);
+        }
+    }
+
+    else {
+        HuffmanTree tree;
+        tree.build(frequencies);
+
+        BitReader reader(input);
+
+        Decoder::decodeFile(
+            reader,
+            tree.getRoot(),
+            originalSize,
+            output
+        );
+    }
+
+    output.close();
+
+    if (!output) {
         throw std::runtime_error(
-            "Failed to finish writing restored file."
+            "Failed to finish restored file."
         );
     }
 }

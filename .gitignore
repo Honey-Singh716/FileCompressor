@@ -28,6 +28,9 @@ random_input.bin
 output/*.huf
 output/*_restored*
 output/benchmark*
+output/*.bin
+output/*.txt    
+
 
 # Temporary files and logs
 *.tmp
