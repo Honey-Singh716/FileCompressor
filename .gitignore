@@ -1,29 +1,37 @@
-# Compiled files
+
+# Compiled executables
 *.exe
 *.out
 *.o
 *.obj
 
-# Build folders
+# IDE settings
+.vscode/
+.idea/
+
+# Build directories
 build/
 bin/
-
-# VS Code
-.vscode/
-
-# CMake
 CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
 
-# Temporary files
+# Generated benchmark datasets
+input.bin
+input.txt
+large_input.txt
+large_1gb.txt
+sample_300mb.txt
+sample_1gb.txt
+sample_500mb.txt
+random_input.bin
+
+# Generated compressed and restored files
+output/*.huf
+output/*_restored*
+output/benchmark*
+
+# Temporary files and logs
 *.tmp
 *.log
-
-# Compressed/output test files
-output/*.huf
-output/*.bin
 
 # OS files
 .DS_Store
