@@ -50,6 +50,8 @@ private:
 
 public:
 
+    HuffmanNode* getRoot() const;
+
     HuffmanTree();
 
     ~HuffmanTree();

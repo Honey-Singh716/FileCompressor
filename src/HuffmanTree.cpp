@@ -145,3 +145,7 @@ HuffmanTree::~HuffmanTree() {
 
     deleteTree(root);
 }
+
+HuffmanNode* HuffmanTree::getRoot() const {
+    return root;
+}

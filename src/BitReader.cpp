@@ -1,19 +1,13 @@
 #include "../include/BitReader.h"
-#include <stdexcept>
 
-BitReader::BitReader(const std::string& fileName) {
-    inputFile.open(fileName, std::ios::binary);
-
-    if (!inputFile) {
-        throw std::runtime_error("Could not open input file.");
-    }
-
-    buffer = 0;
-    bitsRemaining = 0;
+BitReader::BitReader(std::ifstream& inputFile)
+    : inputFile(inputFile),
+      buffer(0),
+      bitsRemaining(0) {
 }
 
-
 bool BitReader::readBit(bool& bit) {
+
     if (bitsRemaining == 0) {
         char byte;
 
@@ -21,7 +15,10 @@ bool BitReader::readBit(bool& bit) {
             return false;
         }
 
-        buffer = static_cast<uint8_t>(byte);
+        buffer = static_cast<uint8_t>(
+            static_cast<unsigned char>(byte)
+        );
+
         bitsRemaining = 8;
     }
 
@@ -31,10 +28,4 @@ bool BitReader::readBit(bool& bit) {
     bitsRemaining--;
 
     return true;
-}
-
-BitReader::~BitReader() {
-    if (inputFile.is_open()) {
-        inputFile.close();
-    }
 }

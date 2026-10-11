@@ -6,26 +6,30 @@
 #include <fstream>
 
 class FileHeader {
-
 public:
-
     inline static constexpr char MAGIC[4] =
         {'H', 'U', 'F', '1'};
 
     static void write(
         std::ofstream& outputFile,
         uint64_t originalSize,
-        const std::array<
-            uint64_t,
-            256
-        >& frequencies
+        const std::array<uint64_t, 256>& frequencies
+    );
+
+    static void read(
+        std::ifstream& inputFile,
+        uint64_t& originalSize,
+        std::array<uint64_t, 256>& frequencies
     );
 
 private:
-
     static void writeUint64(
         std::ofstream& outputFile,
         uint64_t value
+    );
+
+    static uint64_t readUint64(
+        std::ifstream& inputFile
     );
 };
 

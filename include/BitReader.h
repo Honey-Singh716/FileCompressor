@@ -1,22 +1,19 @@
 #ifndef BIT_READER_H
 #define BIT_READER_H
 
-#include <fstream>
 #include <cstdint>
-#include <string>
+#include <fstream>
 
 class BitReader {
 private:
-    std::ifstream inputFile;
-
-    uint8_t buffer; 
+    std::ifstream& inputFile;
+    uint8_t buffer;
     int bitsRemaining;
 
 public:
-    BitReader(const std::string& fileName);
-    ~BitReader();
+    BitReader(std::ifstream& inputFile);
 
     bool readBit(bool& bit);
 };
 
-#endif 
+#endif
